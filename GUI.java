@@ -29,7 +29,8 @@ class GUI {
         JPanel panel = new JPanel(null);
 
         JButton button = new JButton("Prikazi predstave");
-        JButton button2 = new JButton("Pretrazi predstave");
+        JButton button2 = new JButton("Pretrazi predstave po nazivu");
+        JButton button3 = new JButton("Pretrazi predstave po ceni");
 
         populateShows();
 
@@ -43,8 +44,15 @@ class GUI {
         button2.addActionListener(e ->
         {
            searchShow = new SearchShow();
-           searchShow.display(button2, shows);
+           searchShow.display(button2, shows, 1);
            button2.setEnabled(false);
+        });
+
+        button3.addActionListener(e ->
+        {
+           searchShow = new SearchShow();
+           searchShow.display(button3, shows, 2);
+           button3.setEnabled(false);
         });
 
 
@@ -52,6 +60,7 @@ class GUI {
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         panel.add(button);
         panel.add(button2);
+        panel.add(button3);
 
         frame.add(panel, BorderLayout.CENTER);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

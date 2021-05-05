@@ -1,6 +1,10 @@
 package oisisi_project_2021.View;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -8,6 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import java.awt.event.KeyEvent;
 
 import oisisi_project_2021.Model.Show;
 
@@ -21,7 +26,7 @@ public class Listing extends JFrame {
     }
 
     public void display(JButton button, ArrayList<Show> shows) {
-        String column[]={"name","date","price"};
+        String column[]={"name","date","price", "show more"};
         DefaultTableModel tableModel = new DefaultTableModel(column, 0);
 
         JTable jTable = new JTable(tableModel);
@@ -33,11 +38,26 @@ public class Listing extends JFrame {
         jTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
         
         shows.forEach(show -> {
-            Object[] objs = {show.name, show.date, show.price};
+            Object[] objs = {show.name, show.date, show.price, "info"};
             tableModel.addRow(objs);
         });
         
         JScrollPane scrollPane = new JScrollPane(jTable);
+
+        Action delete = new AbstractAction()
+        {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JTable table = (JTable)e.getSource();
+            int modelRow = Integer.valueOf( e.getActionCommand() );
+            ((DefaultTableModel)table.getModel()).removeRow(modelRow);
+            
+        }
+        };
+        
+        ButtonColumn buttonColumn = new ButtonColumn(jTable, delete, 3);
+        buttonColumn.setMnemonic(KeyEvent.VK_D);
 
         getContentPane().add(scrollPane);
         pack();
