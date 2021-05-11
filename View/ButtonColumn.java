@@ -1,4 +1,4 @@
-package oisisi_project_2021.View;
+package View;
 
 import java.awt.*;
 import java.awt.event.*;

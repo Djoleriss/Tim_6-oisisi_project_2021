@@ -1,4 +1,6 @@
-package oisisi_project_2021.View;
+package View;
+
+import Model.Show;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -13,8 +15,8 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.KeyEvent;
+import java.util.Date;
 
-import oisisi_project_2021.Model.Show;
 
 import javax.swing.JScrollPane;
 
@@ -26,7 +28,7 @@ public class Listing extends JFrame {
     }
 
     public void display(JButton button, ArrayList<Show> shows) {
-        String column[]={"name","date","price", "show more"};
+        String column[]={"name","date","price","description","show more"};
         DefaultTableModel tableModel = new DefaultTableModel(column, 0);
 
         JTable jTable = new JTable(tableModel);
@@ -36,9 +38,10 @@ public class Listing extends JFrame {
         jTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         jTable.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
         jTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+        jTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
         
         shows.forEach(show -> {
-            Object[] objs = {show.name, show.date, show.price, "info"};
+            Object[] objs = {show.name, show.date, show.price, show.description, "info"};
             tableModel.addRow(objs);
         });
         
@@ -55,9 +58,28 @@ public class Listing extends JFrame {
             
         }
         };
+
+        Action showInfoAction = new AbstractAction()
+        {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JTable table = (JTable)e.getSource();
+                int row = table.getSelectedRow();
+
+                String showName = table.getModel().getValueAt(row, 0).toString();
+                Date showDate = (Date) table.getModel().getValueAt(row, 1);
+                float ticketPrice = (float) table.getModel().getValueAt(row, 2);
+                String showDescription = table.getModel().getValueAt(row, 3).toString();
+
+                Show show = new Show(showName, showDescription, showDate, ticketPrice);
+
+                ShowInfo showInfo = new ShowInfo(show);
+            }
+        };
         
-        ButtonColumn buttonColumn = new ButtonColumn(jTable, delete, 3);
-        buttonColumn.setMnemonic(KeyEvent.VK_D);
+        ButtonColumn buttonColumn = new ButtonColumn(jTable, showInfoAction, 4);
+        //buttonColumn.setMnemonic(KeyEvent.VK_D);
 
         getContentPane().add(scrollPane);
         pack();
