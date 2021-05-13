@@ -3,6 +3,9 @@ package View;
 import Model.Show;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Date;
 
 public class ShowInfo extends JFrame {
@@ -27,6 +30,16 @@ public class ShowInfo extends JFrame {
         setLayout(null);
 
         add(back = new JButton("Nazad")).setBounds(220,320,100,40);
+
+        Action returnAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                    dispose();
+                }
+        };
+
+        back.addActionListener(returnAction);
+
 
         add(labelName).setBounds(50, 50, 150, 20);
         add(labelDescription).setBounds(50, 100, 150, 20);
