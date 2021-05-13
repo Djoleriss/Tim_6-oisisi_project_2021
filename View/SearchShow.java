@@ -1,28 +1,11 @@
 package View;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.LayoutManager;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import Model.Show;
+import org.jdatepicker.impl.JDatePanelImpl;
+import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.UtilDateModel;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.RowFilter;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -30,10 +13,19 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.NumberFormatter;
-
-import java.awt.event.*;
-
-import Model.Show;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class SearchShow extends JFrame {
 
@@ -80,81 +72,26 @@ public class SearchShow extends JFrame {
             tableModel.addRow(objs);
         });
 
-        TableRowSorter<TableModel> rowSorter
-                = new TableRowSorter<>(jTable.getModel());
-
-
-        NumberFormat format = NumberFormat.getInstance();
-        NumberFormatter formatter = new NumberFormatter(format);
-        formatter.setValueClass(Integer.class);
-        formatter.setMinimum(0);
-        formatter.setMaximum(Integer.MAX_VALUE);
-        formatter.setAllowsInvalid(false);
-        formatter.setCommitsOnValidEdit(true);
-
-        JFormattedTextField jtfFilter = new JFormattedTextField(formatter);
-        JFormattedTextField jtfFilter2 = new JFormattedTextField(formatter);
-
-        jtfFilter.setPreferredSize(new Dimension(100, 20));
-        jtfFilter2.setPreferredSize(new Dimension(100, 20));
-
-        jtfFilter.addKeyListener(new KeyListener() {
-
-            public void keyPressed(KeyEvent e) {
-                Pattern pattern = Pattern.compile("^[0-9, ]+$");
-                char command = e.getKeyChar();
-                Matcher m = pattern.matcher(String.valueOf(command));
-
-                if(!m.matches()) {
-                    System.out.println("Nope.");
-                    return;
-                }
-
-                firstPrice += String.valueOf(command);
-            }
-
-            public void keyReleased(KeyEvent e) { /* ... */ }
-
-            public void keyTyped(KeyEvent e) { /* ... */ }
-        });
-
-        jtfFilter2.addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                Pattern pattern = Pattern.compile("^[0-9, ]+$");
-                char command = e.getKeyChar();
-                Matcher m = pattern.matcher(String.valueOf(command));
-
-                if(!m.matches()) {
-                    System.out.println("Nope.");
-                    return;
-                }
-
-                secondPrice += String.valueOf(command);
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                // TODO Auto-generated method stub
-
-            }
-
-
-
-        });
-
         JPanel panel = new JPanel();
-        panel.add(new JLabel("Specify a word to match:"),
+
+        UtilDateModel model = new UtilDateModel();
+        UtilDateModel model2 = new UtilDateModel();
+
+        Properties p = new Properties();
+        p.put("text.today", "Today");
+        p.put("text.month", "Month");
+        p.put("text.year", "Year");
+
+        JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
+        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
+
+        JDatePanelImpl datePanel2 = new JDatePanelImpl(model2, p);
+        JDatePickerImpl datePicker2 = new JDatePickerImpl(datePanel2, new DateLabelFormatter());
+
+        panel.add(new JLabel("Specify a date range:"),
                 BorderLayout.WEST);
-        panel.add(jtfFilter, BorderLayout.EAST);
-        panel.add(jtfFilter2, BorderLayout.CENTER);
+        panel.add(datePicker, BorderLayout.EAST);
+        panel.add(datePicker2, BorderLayout.CENTER);
 
         JButton searchButton = new JButton("Search");
 
@@ -166,14 +103,24 @@ public class SearchShow extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                firstPrice = firstPrice == "" ? String.valueOf(0) : firstPrice;
-                secondPrice = secondPrice == "" ? String.valueOf(0) : secondPrice;
-                if(Double.parseDouble(firstPrice) > Double.parseDouble(secondPrice)) {
-                    JOptionPane.showMessageDialog(frame, "First value needs to be larger then second value!");
-                } else {
-                    ArrayList<Show>  newShows =  (ArrayList<Show>) shows.stream().filter(show -> show.price > Double.parseDouble(firstPrice) && show.price < Double.parseDouble(secondPrice)).collect(Collectors.toList());
-                    remove(jsp);
-                    displayPriceSearch(newShows, button);
+                Date startDate = (Date) datePicker.getModel().getValue();
+                Date endDate = (Date) datePicker2.getModel().getValue();
+                int currentYear = new Date().getYear();
+
+                if(startDate.getYear() != currentYear || endDate.getYear() != currentYear) {
+                    JOptionPane.showMessageDialog(frame, "You must choose dates in the current year ("
+                            + (currentYear +1900) + ")!");
+                }
+                else {
+                    List<RowFilter<Object, Object>> filters = new ArrayList<RowFilter<Object, Object>>(2);
+                    filters.add(RowFilter.dateFilter(RowFilter.ComparisonType.AFTER, startDate));
+                    filters.add(RowFilter.dateFilter(RowFilter.ComparisonType.BEFORE, endDate));
+
+                    TableRowSorter<TableModel> tr
+                            = new TableRowSorter<>(jTable.getModel());
+                    jTable.setRowSorter(tr);
+                    RowFilter<Object, Object> rf = RowFilter.andFilter(filters);
+                    tr.setRowFilter(rf);
                 }
             }
 
@@ -186,12 +133,11 @@ public class SearchShow extends JFrame {
         pack();
         setDefaultCloseOperation(JEXIT_ON_CLOSE);
 
-        setBounds(600, 600, 600, 600);
+        setBounds(600, 600, 800, 600);
 
         setLocationRelativeTo(null);
         setVisible(true);
 
-        jTable.setRowSorter(rowSorter);
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -205,6 +151,28 @@ public class SearchShow extends JFrame {
                 }
             }
         });
+    }
+
+    public class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
+
+        private String datePattern = "yyyy-MM-dd";
+        private SimpleDateFormat dateFormatter = new SimpleDateFormat(datePattern);
+
+        @Override
+        public Object stringToValue(String text) throws ParseException {
+            return dateFormatter.parseObject(text);
+        }
+
+        @Override
+        public String valueToString(Object value) throws ParseException {
+            if (value != null) {
+                Calendar cal = (Calendar) value;
+                return dateFormatter.format(cal.getTime());
+            }
+
+            return "";
+        }
+
     }
 
     public void displayPriceSearch(ArrayList<Show> shows, JButton button) {
