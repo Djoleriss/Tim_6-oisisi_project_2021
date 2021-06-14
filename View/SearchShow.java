@@ -1,5 +1,6 @@
 package View;
 
+import Model.My_Connection;
 import Model.Show;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
@@ -18,10 +19,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +51,7 @@ public class SearchShow extends JFrame {
                 displayNameSearch(shows, button);
                 break;
             case 2:
-                displayPriceSearch(shows, button);
+                displayPriceSearch(shows, button, 0);
                 break;
             case 3:
                 displayDateSearch(shows, button);
@@ -59,6 +65,8 @@ public class SearchShow extends JFrame {
     private void displayDateSearch(ArrayList<Show> shows, JButton button) {
         DefaultTableModel tableModel = new DefaultTableModel(column, 0);
 
+        shows = this.getShows();
+        
         JTable jTable = new JTable(tableModel);
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -175,7 +183,12 @@ public class SearchShow extends JFrame {
 
     }
 
-    public void displayPriceSearch(ArrayList<Show> shows, JButton button) {
+    public void displayPriceSearch(ArrayList<Show> shows, JButton button, int type) {
+    	
+        if(type == 0) shows = this.getShows();
+    	
+        final ArrayList<Show> showTemp = shows;
+        
         DefaultTableModel tableModel = new DefaultTableModel(column, 0);
 
         JTable jTable = new JTable(tableModel);
@@ -279,12 +292,15 @@ public class SearchShow extends JFrame {
             public void actionPerformed(ActionEvent e) {
                     firstPrice = firstPrice == "" ? String.valueOf(0) : firstPrice;
                     secondPrice = secondPrice == "" ? String.valueOf(0) : secondPrice;
+                    
+                    System.out.println(firstPrice);
+                    System.out.println(secondPrice);
                 if(Double.parseDouble(firstPrice) > Double.parseDouble(secondPrice)) {
-                    JOptionPane.showMessageDialog(frame, "First value needs to be larger then second value!");
+                    JOptionPane.showMessageDialog(frame, "First value needs to be smaller then second value!");
                 } else {
-                    ArrayList<Show>  newShows =  (ArrayList<Show>) shows.stream().filter(show -> show.price > Double.parseDouble(firstPrice) && show.price < Double.parseDouble(secondPrice)).collect(Collectors.toList());
+                	ArrayList<Show>  newShows =  (ArrayList<Show>) showTemp.stream().filter(show -> show.price > Double.parseDouble(firstPrice) && show.price < Double.parseDouble(secondPrice)).collect(Collectors.toList());
                     remove(jsp);
-                    displayPriceSearch(newShows, button);
+                    displayPriceSearch(newShows, button, 1);
                 }
             }
             
@@ -323,6 +339,8 @@ public class SearchShow extends JFrame {
         DefaultTableModel tableModel = new DefaultTableModel(column, 0);
 
         JTable jTable = new JTable(tableModel);
+        
+        shows = this.getShows();
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment( JLabel.CENTER );
@@ -403,5 +421,31 @@ public class SearchShow extends JFrame {
             }
         });
     }
+    
+    private ArrayList<Show> getShows() {
+  	  String query = "SELECT * FROM `show`";
+        Statement st;
+        ResultSet rs;
+        ArrayList<Show> shows = new ArrayList<Show>();
+  	  
+        try {
+            st = My_Connection.getInstance().createStatement();
+            rs = st.executeQuery(query);
+
+            while (rs.next()) {
+               Show s = new Show();
+          	 s.name = rs.getString(2);
+          	 s.date = new Date();
+          	 s.price = Float.parseFloat(rs.getString(4));
+          	 s.description = rs.getString(5);
+          	 s.id = rs.getLong(1);
+          	 shows.add(s);
+            }
+            return shows;
+        } catch (SQLException ex) {
+            Logger.getLogger(Registracija.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return shows;
+  }
 
 }
